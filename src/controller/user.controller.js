@@ -20,12 +20,13 @@ class UserContoller {
             httpOnly: true // Эти куки нельзя получать из браузера с помощью js
          })
 
-         return res.json(userData)
+         res.json({data: userData, message: 'Success'})
       } catch (e) {
          console.log(e)
          next(e)
       }
    }
+
    async login(req, res, next){
       try {
          const { email, password } = req.body
@@ -37,19 +38,20 @@ class UserContoller {
             httpOnly: true // Эти куки нельзя получать из браузера с помощью js
          })
 
-         return res.json(userData)
+         return res.json({data: userData, message: 'Success'})
       } catch (e) {
          console.log(e)
          next(e)
       }
    }
+
    async logout(req, res, next){
       try {
          const { refreshToken } = req.cookies
          const token = await userService.logout(refreshToken)
          res.clearCookie('refreshToken')
 
-         return res.json(token)
+         return res.json({data: token, message: 'Success'})
       } catch (e) {
          console.log(e)
          next(e)
@@ -57,11 +59,9 @@ class UserContoller {
    }
 
    async activate(req, res, next){
-      console.log('heeeere')
-
       try {
          const { activateLinkId } = req.params
-         console.log('activateLinkId', req.params)
+
           await userService.activate(activateLinkId)
     
          return res.redirect(
@@ -73,27 +73,75 @@ class UserContoller {
          next(e)
       }
    }
+
+   async resetPassword(req, res, next){
+      //TODO CHECK IF ACCESS LINK IS NOT EXPIRED!
+      try {
+         const { accessLink } = req.params;
+
+         const { newPassword } = req.body;
+
+         const user = await userService.resetPassword({ newPassword, accessLink });
+    
+         return res.json({
+            data: user,
+            message: 'Password was changed succesfully'
+         });
+      } catch (e) {
+         console.log(e)
+         next(e)
+      }
+   }
+
+   async forgotPasswordByEmail(req, res, next){
+      try {
+         const { email } = req.body
+
+         const { temproraryLink } = await userService.forgotPasswordByEmail(email);
+
+         return res.json({
+            data: temproraryLink,
+            message: 'Email was sended'
+         })
+      } catch (e) {
+         console.log(e)
+         next(e)
+      }
+   }
+
    async refresh(req, res, next){
       try {
          const { refreshToken } = req.cookies
-         console.log(refreshToken)
+
          const userData = await userService.refresh(refreshToken)
 
          res.cookie('refreshToken', userData.refreshToken, {
             maxAge: 30 * 24 * 60 * 10 * 1000, // 30d
             httpOnly: true // Эти куки нельзя получать из браузера с помощью js
          })
-         return res.json(userData)
+         return res.json({data: userData, message: 'Success'})
       } catch (e) {
          console.log(e)
          next(e)
       }
    }
+
+   async checkValidateUserByJWT(req, res, next){
+      try {
+         const user = await userService.fetchUserById(req.user.id)
+
+         return res.json({data: user, message: `User ${user.email} authorized`})
+      } catch (e) {
+         console.log(e)
+         next(e)
+      }
+   }
+
    async fetchUsers(_, res, next){
       try {
          const users = await userService.fetchUsers()
 
-         return res.json(users)
+         return res.json({data: users, message: 'Success'})
       } catch (e) {
          console.log(e)
          next(e)

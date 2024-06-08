@@ -16,7 +16,7 @@ class UserService {
 
       const hashPassword = await bcrypt.hash(password, 4)
       const linkName = uuidv4()
-      const activationLink = `${process.env.API_URL}/api/activate/${linkName}`
+      const activationLink = `${process.env.API_URL}/api/auth/activate/${linkName}`
 
       const User = await UserModel.create({
          email,
@@ -27,7 +27,7 @@ class UserService {
       
       const userData = new UserDto(User)
       
-      await emailService.sendMail(email, activationLink)
+      await emailService.sendMailWithActivationLink(email, activationLink)
       const tokens = tokenService.generateTokens({...userData})
 
       await tokenService.saveRefreshToken(userData.id, tokens.refreshToken)
@@ -70,6 +70,42 @@ class UserService {
 
       return user
    }
+
+   async forgotPasswordByEmail(email){
+      const user = await UserModel.findOne({ email });
+      
+      const { temporaryLink: link } = tokenService.generateTemporaryLink({ email: user.email })
+
+      const temproraryLink = `${process.env.CLIENT_URL}/auth/reset-password?accessLink=${link}`
+
+      await emailService.sendMailWithActivationLink(user.email, temproraryLink)
+
+      return {temproraryLink}
+   }
+
+   async resetPassword({ newPassword, accessLink }){
+      const activeLink = tokenService.verifyTemproraryLink(accessLink)
+      const user = await UserModel.findOne({ email: activeLink?.email });
+      
+      if(!activeLink) {
+         throw ApiError.BadRequest('Link expired')
+      }
+
+      if(!user){
+         throw ApiError.BadRequest('This user is not exist')
+
+      }
+
+      const hashPassword = await bcrypt.hash(newPassword, 4)
+
+      
+      user.password = hashPassword;
+
+      user.save();
+
+      return user
+   }
+
    async refresh(refreshToken) {
       if(!refreshToken){
          throw ApiError.UnauthorizedError()
@@ -77,7 +113,7 @@ class UserService {
 
       const userData = tokenService.verifyRefreshToken(refreshToken)
       const tokenFromDb = await tokenService.findOne(refreshToken)
-      console.log('userData', userData)
+
       if(!userData || !tokenFromDb){
          throw ApiError.UnauthorizedError()
       }
@@ -94,6 +130,11 @@ class UserService {
      const users = await UserModel.find()
      return users
    }
+
+   async fetchUserById(id){
+      const user = await UserModel.findById(id)
+      return user
+    }
 }
 
 module.exports = new UserService

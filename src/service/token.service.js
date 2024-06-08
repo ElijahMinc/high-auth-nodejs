@@ -7,14 +7,23 @@ const jwt = require('jsonwebtoken')
 class TokenService {
     generateTokens(payload){
       const accessToken = jwt.sign(payload, process.env.SECRET_KEY, {
-         expiresIn: '10s' // 10s
+         expiresIn: '24h' // 10s
       })      
       const refreshToken = jwt.sign(payload, process.env.SECRET_REFRESH_KEY, {
-         expiresIn: '30s' // 30s
+         expiresIn: '365d' // 30s
       })  
 
 
       return { accessToken, refreshToken }
+   }
+
+   generateTemporaryLink(payload){
+      const temporaryLink = jwt.sign(payload, process.env.SECRET_KEY, {
+         expiresIn: '5m' // 10s
+      })       
+
+
+      return { temporaryLink }
    }
 
    async saveRefreshToken(userId, refreshToken) {
@@ -55,6 +64,15 @@ class TokenService {
    verifyAccessToken(accessToken){
       try {
          const isVerify = jwt.verify(accessToken, process.env.SECRET_KEY)
+         return isVerify
+      } catch (e) {
+         return null
+      }
+   }
+
+   verifyTemproraryLink(temporaryLink){
+      try {
+         const isVerify = jwt.verify(temporaryLink, process.env.SECRET_KEY)
          return isVerify
       } catch (e) {
          return null

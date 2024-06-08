@@ -12,7 +12,7 @@ class MailService {
          }
        });
    }
-   async sendMail(to, activationLink){
+   async sendMailWithActivationLink(to, activationLink){
       
     await this.transporter.sendMail({
          from: process.env.SMTP_USER, // sender address
@@ -20,7 +20,7 @@ class MailService {
          text: "", // plain text body
          html: `
             <div>
-               <h1>Подтвердите свой аккаунт ${process.env.API_URL}</h1>
+               <h1>Confirm your account ${process.env.API_URL}</h1>
                <a target="_blank" href=${activationLink}>${activationLink}</a>
             </div>
 
@@ -29,6 +29,27 @@ class MailService {
        });
 
    }
+
+   async sendMailForForgotPassword(to, resetPasswordLink){
+      
+      await this.transporter.sendMail({
+           from: process.env.SMTP_USER, // sender address
+           to, // list of receivers
+           text: "", // plain text body
+           html: `
+              <div>
+                 <h1>Message from ${process.env.API_URL}</h1>
+                 Link for reset password: 
+                 <a target="_blank" href=${resetPasswordLink}>
+                  ${resetPasswordLink}
+                  </a>
+              </div>
+  
+           
+           `, // html body
+         });
+  
+     }
 }
 
 module.exports = new MailService
