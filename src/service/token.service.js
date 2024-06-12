@@ -17,6 +17,14 @@ class TokenService {
       return { accessToken, refreshToken }
    }
 
+   generateAccessToken(payload){
+      const accessToken = jwt.sign(payload, process.env.SECRET_KEY, {
+         expiresIn: '24h' // 10s
+      })      
+
+      return { accessToken }
+   }
+
    generateTemporaryLink(payload){
       const temporaryLink = jwt.sign(payload, process.env.SECRET_KEY, {
          expiresIn: '5m' // 10s

@@ -5,6 +5,8 @@ const emailService = require('./email.service')
 const { v4: uuidv4 } = require('uuid')
 const UserDto = require('../dto/UserDto');
 const tokenService = require('./token.service');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
+const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, githubOAuthURL } = require('../utils/loginByOAuthGithub.constant')
 
 class UserService {
    async registration(email, password){
@@ -134,6 +136,71 @@ class UserService {
    async fetchUserById(id){
       const user = await UserModel.findById(id)
       return user
+    }
+
+    async loginByOAuthGoogle(email){
+      let userData = null;
+      let candidate = await UserModel.findOne( { email } )
+
+      if(!candidate){
+         const linkName = uuidv4()
+         const activationLink = `${process.env.API_URL}/api/auth/activate/${linkName}`
+   
+         const User = await UserModel.create({
+            email,
+            password: '',
+            isActivated: false,
+            activationLink: linkName
+         })
+         console.log('User', User)
+         userData = new UserDto(User)
+         
+         await emailService.sendMailWithActivationLink(email, activationLink)
+      }else{
+         userData = new UserDto(candidate)
+      }
+
+
+
+      const tokens = tokenService.generateTokens({...userData});
+
+      await tokenService.saveRefreshToken(userData.id, tokens.refreshToken)
+
+      return {...tokens, user: userData}
+    }
+
+
+    async getAccessTokenByOAuthGithub(code){
+      const params = `?client_id=${GITHUB_CLIENT_ID}&client_secret=${GITHUB_CLIENT_SECRET}&code=${code}`;
+      console.log('params' ,params)
+      const res = await fetch('https://github.com/login/oauth/access_token' + params, {
+         method: 'POST',
+         headers: {
+            'Content-Type': "application/json"
+         }
+      })
+      console.log('res', res)
+      
+      const accessToken = await res.json();
+      console.log('accessToken', accessToken)
+      return accessToken
+    }
+
+    async getUserDataByAccessTokenOAuthGithub(accessToken){
+     const params = `?client_id=${GITHUB_CLIENT_ID}&client_secret=${GITHUB_CLIENT_SECRET}`;
+
+     const res =  await fetch('https://api.github.com/user' + params, {
+         method: 'GET',
+         headers: {
+            'Authorization': `Bearer: ${accessToken}`
+         }
+      })
+
+      const userData = await res.json()
+    
+     const tokens = await tokenService.generateAccessToken(userData)
+
+      return { user: userData, ...tokens };
     }
 }
 

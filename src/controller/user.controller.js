@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 const ApiError = require('../exeptions/api-error');
 const userService = require('../service/user.service');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 
 class UserContoller {
    async registration(req, res, next){
@@ -142,6 +143,47 @@ class UserContoller {
          const users = await userService.fetchUsers()
 
          return res.json({data: users, message: 'Success'})
+      } catch (e) {
+         console.log(e)
+         next(e)
+      }
+   }
+
+   async loginByOAuthGoogle(req, res, next){
+      const errors = validationResult(req)
+
+      if(!errors.isEmpty()){
+         next(ApiError.BadRequest('Something went wrong', errors))
+      }
+
+      const { email } = req.body
+
+      const userData = await userService.loginByOAuthGoogle(email);
+
+      res.cookie('refreshToken', userData.refreshToken, {
+         maxAge: 30 * 24 * 60 * 10 * 1000, // 30d
+         httpOnly: true // Эти куки нельзя получать из браузера с помощью js
+      })
+
+      res.json({data: userData, message: 'Success'})
+   }
+
+   //!TODO 
+   async loginByOAuthGithub(req, res, next){
+      const errors = validationResult(req)
+
+      if(!errors.isEmpty()){
+         next(ApiError.BadRequest('Something went wrong', errors))
+      }
+
+      const code = req.query.code;
+
+      try {
+         const accessToken = await userService.getAccessTokenByOAuthGithub(code)
+
+         const userData = await userService.getUserDataByAccessTokenOAuthGithub(accessToken);
+
+         res.json({data: userData, message: 'Success'})
       } catch (e) {
          console.log(e)
          next(e)
