@@ -67,7 +67,7 @@ class UserContoller {
 
           await userService.activate(activateLinkId)
     
-         return res.redirect(process.env.CLIENT_URL)
+         return res.redirect(`${process.env.CLIENT_URL}/auth?page=signin`)
       } catch (e) {
          console.log(e)
          next(e)

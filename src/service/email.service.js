@@ -20,7 +20,7 @@ class MailService {
          text: "", // plain text body
          html: `
             <div>
-               <h1>Confirm your account ${process.env.API_URL}</h1>
+               <h1>Verify your account</h1>
                <a target="_blank" href=${activationLink}>${activationLink}</a>
             </div>
 
