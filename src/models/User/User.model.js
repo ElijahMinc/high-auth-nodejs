@@ -9,7 +9,6 @@ const User = new Schema({
    },
    password: {
       type: String,
-      unique: true,
       require: true
    },
    isActivated: {
