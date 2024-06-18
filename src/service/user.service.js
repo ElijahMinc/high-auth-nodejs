@@ -152,7 +152,6 @@ class UserService {
             isActivated: false,
             activationLink: linkName
          })
-         console.log('User', User)
          userData = new UserDto(User)
          
          await emailService.sendMailWithActivationLink(email, activationLink)
@@ -172,17 +171,14 @@ class UserService {
 
     async getAccessTokenByOAuthGithub(code){
       const params = `?client_id=${GITHUB_CLIENT_ID}&client_secret=${GITHUB_CLIENT_SECRET}&code=${code}`;
-      console.log('params' ,params)
       const res = await fetch('https://github.com/login/oauth/access_token' + params, {
          method: 'POST',
          headers: {
             'Content-Type': "application/json"
          }
       })
-      console.log('res', res)
       
       const accessToken = await res.json();
-      console.log('accessToken', accessToken)
       return accessToken
     }
 

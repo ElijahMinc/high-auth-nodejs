@@ -67,10 +67,7 @@ class UserContoller {
 
           await userService.activate(activateLinkId)
     
-         return res.redirect(
-            'https://www.google.com/'
-            // process.env.CLIENT_URL
-            )
+         return res.redirect(process.env.CLIENT_URL)
       } catch (e) {
          console.log(e)
          next(e)
@@ -131,9 +128,14 @@ class UserContoller {
 
    async checkValidateUserByJWT(req, res, next){
       try {
+         console.log(req.user)
          const user = await userService.fetchUserById(req.user.id)
 
-         return res.json({data: user, message: `User ${user.email} authorized`})
+         if(!user) {
+            return next(ApiError.UnauthorizedError('User was not found'))
+         }
+
+         return res.json({data: user, message: `User ${user?.email} authorized`})
       } catch (e) {
          console.log(e)
          next(e)
