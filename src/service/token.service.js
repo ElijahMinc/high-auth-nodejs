@@ -1,7 +1,4 @@
 const TokenModel = require('../models/Token/Token.model');
-const ApiError = require('../exeptions/api-error');
-const bcrypt = require('bcrypt')
-const { v4: uuidv4 } = require('uuid')
 const jwt = require('jsonwebtoken')
 
 class TokenService {
@@ -55,7 +52,6 @@ class TokenService {
 
    async removeToken(refreshToken){
       const token = await TokenModel.deleteOne( { refreshToken } )
-
       return token
    }
 

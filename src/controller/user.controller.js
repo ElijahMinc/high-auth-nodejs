@@ -1,7 +1,7 @@
 const { validationResult } = require('express-validator');
 const ApiError = require('../exeptions/api-error');
 const userService = require('../service/user.service');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
+const { cookieParserAuthOption } = require('../utils/cookieParserAuthOptions');
 
 class UserContoller {
    async registration(req, res, next){
@@ -16,10 +16,7 @@ class UserContoller {
 
          const userData = await userService.registration(email, password)
 
-         res.cookie('refreshToken', userData.refreshToken, {
-            maxAge: 30 * 24 * 60 * 10 * 1000, // 30d
-            httpOnly: true // Эти куки нельзя получать из браузера с помощью js
-         })
+         res.cookie('refreshToken', userData.refreshToken, cookieParserAuthOption)
 
          res.json({data: userData, message: 'Success'})
       } catch (e) {
@@ -34,10 +31,7 @@ class UserContoller {
 
          const userData = await userService.login(email, password)
 
-         res.cookie('refreshToken', userData.refreshToken, {
-            maxAge: 30 * 24 * 60 * 10 * 1000, // 30d
-            httpOnly: true // Эти куки нельзя получать из браузера с помощью js
-         })
+         res.cookie('refreshToken', userData.refreshToken, cookieParserAuthOption)
 
          return res.json({data: userData, message: 'Success'})
       } catch (e) {
@@ -115,10 +109,7 @@ class UserContoller {
 
          const userData = await userService.refresh(refreshToken)
 
-         res.cookie('refreshToken', userData.refreshToken, {
-            maxAge: 30 * 24 * 60 * 10 * 1000, // 30d
-            httpOnly: true // Эти куки нельзя получать из браузера с помощью js
-         })
+         res.cookie('refreshToken', userData.refreshToken, cookieParserAuthOption)
          return res.json({data: userData, message: 'Success'})
       } catch (e) {
          console.log(e)
@@ -128,7 +119,6 @@ class UserContoller {
 
    async checkValidateUserByJWT(req, res, next){
       try {
-         console.log(req.user)
          const user = await userService.fetchUserById(req.user.id)
 
          if(!user) {
@@ -164,10 +154,7 @@ class UserContoller {
 
       const userData = await userService.loginByOAuthGoogle(email);
 
-      res.cookie('refreshToken', userData.refreshToken, {
-         maxAge: 30 * 24 * 60 * 10 * 1000, // 30d
-         httpOnly: true // Эти куки нельзя получать из браузера с помощью js
-      })
+      res.cookie('refreshToken', userData.refreshToken, cookieParserAuthOption)
 
       res.json({data: userData, message: 'Success'})
    }
